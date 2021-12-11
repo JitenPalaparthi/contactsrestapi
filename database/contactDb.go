@@ -19,3 +19,11 @@ func (c *ContactDB) Create(contact *models.Contact) (id interface{}, err error) 
 	}
 	return contact.ID, nil
 }
+
+func (c *ContactDB) Delete(id int) (records interface{}, err error) {
+	result := c.DBClient.(*gorm.DB).Delete(&models.Contact{}, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return result.RowsAffected, nil
+}

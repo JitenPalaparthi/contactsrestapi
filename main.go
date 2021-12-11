@@ -1,15 +1,15 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"time"
 
 	"contacts/database"
+	"contacts/database/mysql"
+	"contacts/database/postgres"
+	"contacts/filedb"
+	"contacts/handlers"
 	"contacts/interfaces"
-	"contacts/models"
 	"flag"
 
 	"github.com/golang/glog"
@@ -18,11 +18,13 @@ import (
 )
 
 var (
-	DB_CONNECTION string
-	PORT          string
-	IdbConnecter  interfaces.DbConnecter
-	Database      database.Database
-	IContact      interfaces.IContact
+	DB_CONNECTION    string
+	PORT             string
+	MODE             string
+	IdbConnecter     interfaces.DbConnecter
+	Database         mysql.Database
+	PostgresDatabase postgres.Database
+	IContact         interfaces.IContact
 )
 
 func usage() {
@@ -43,7 +45,7 @@ func main() {
 
 	DB_CONNECTION = os.Getenv("DB_CONNECTION")
 	if DB_CONNECTION == "" {
-		flag.StringVar(&DB_CONNECTION, "dns", `jiten:jite123@tcp(127.0.0.1:3306)/contactsdb?charset=utf8mb4&parseTime=True&loc=Local`, "pass --dns=connection string to the database")
+		flag.StringVar(&DB_CONNECTION, "dsn", `jiten:jite123@tcp(127.0.0.1:3306)/contactsdb?charset=utf8mb4&parseTime=True&loc=Local`, "pass --dns=connection string to the database")
 	}
 	PORT = os.Getenv("PORT")
 
@@ -52,32 +54,46 @@ func main() {
 
 	}
 
+	MODE = os.Getenv("MODE")
+
+	if MODE == "" {
+		flag.StringVar(&MODE, "mode", "filedb", "--mode=mysql|filedb|postgres")
+
+	}
+
 	flag.Parse()
 	glog.Flush()
 
-	IdbConnecter = &Database // New struct
+	var IContact interfaces.IContact
 
-	db, err := IdbConnecter.GetConnection(DB_CONNECTION)
-	if err != nil {
-		panic(err)
+	switch MODE {
+	case "mysql":
+		IdbConnecter = &Database // New struct
+
+		db, err := IdbConnecter.GetConnection(DB_CONNECTION)
+		if err != nil {
+			panic(err)
+		}
+		IContact = &database.ContactDB{DBClient: db}
+	case "postgres":
+		//"host=localhost user=jiten password=jiten123 dbname=contactsdb port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+		// docker run -d -p 5432:5432--name mypostgres -e POSTGRES_PASSWORD=jiten123 -e POSTGRES_USER=jiten -e POSTGRES_DB=contactsdb postgress
+		IdbConnecter = &PostgresDatabase // New struct
+
+		db, err := IdbConnecter.GetConnection(DB_CONNECTION)
+		if err != nil {
+			panic(err)
+		}
+
+		IContact = &database.ContactDB{DBClient: db}
+
+	case "filedb":
+		IContact = &filedb.ContactFileDB{}
+	default:
+		panic("No db mode is provided")
 	}
 
-	IContact := &database.ContactDB{DBClient: db}
-
-	/*contact := &models.Contact{Name: "JIten", Email: "JitenP@outlook.com", Mobile: "9618558500"}
-	err = contact.Validate()
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		id, err := IContact.Create(contact)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Println("Contact Id :", id)
-		}
-	}*/
-
-	fmt.Println(db)
+	contactHandler := &handlers.ContactHandler{IContact: IContact}
 
 	router := gin.Default()
 
@@ -94,65 +110,8 @@ func main() {
 
 	})
 
-	router.POST("/v1/person", func(c *gin.Context) {
-		var buf []byte
-		//	n, err := c.Request.Body.Read(buf)
-		buf, err := ioutil.ReadAll(c.Request.Body)
-		if err != nil {
-			c.JSON(400, gin.H{
-				"status":  "fail",
-				"message": err.Error(),
-			})
-			glog.Errorln(err)
-			c.Abort()
-			return
-		}
-
-		contact := &models.Contact{}
-		err = json.Unmarshal(buf, contact)
-		if err != nil {
-			c.JSON(400, gin.H{
-				"status":  "fail",
-				"message": err.Error(),
-			})
-			glog.Errorln(err)
-
-			c.Abort()
-			return
-		}
-		err = contact.Validate()
-		if err != nil {
-			c.JSON(400, gin.H{
-				"status":  "fail",
-				"message": err.Error(),
-			})
-			c.Abort()
-			return
-		}
-		contact.Status = "inactive"
-		contact.LastModified = time.Now().UTC().String()
-
-		id, err := IContact.Create(contact)
-		if err != nil {
-			c.JSON(400, gin.H{
-				"status":  "fail",
-				"message": err.Error(),
-			})
-			glog.Errorln(err)
-
-			c.Abort()
-			return
-		}
-		c.JSON(201, gin.H{
-			"status":  "suceess",
-			"message": id,
-		})
-		glog.Info("Success-->", id)
-
-		c.Abort()
-		return
-	})
-
+	router.POST("/v1/person", contactHandler.CreatePerson())
+	router.DELETE("/v1/person/:id", contactHandler.DeletePerson())
 	router.Run(PORT)
 
 }

@@ -1,10 +1,10 @@
-package database
+package postgres
 
 import (
 	"fmt"
 	"time"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -18,10 +18,10 @@ type Database struct{}
 func (d *Database) GetConnection(dns string) (interface{}, error) {
 	retries := 0
 retry:
-	db, err := gorm.Open(mysql.Open(dns), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dns), &gorm.Config{})
 	if err != nil {
 		if retries < MAX_RETRIES {
-			fmt.Println("Retrying to connect to the database-->", retries+1)
+			fmt.Println("Retrying to connect to the postgress database-->", retries+1)
 			retries++
 			time.Sleep(time.Second * time.Duration(MAX_TIMEWAIT))
 			goto retry
