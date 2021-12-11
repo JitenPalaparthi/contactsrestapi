@@ -24,3 +24,7 @@ func (c *Contact) Validate() error {
 	}
 	return nil
 }
+
+func Add(i, j int) int {
+	return i + j
+}
