@@ -19,16 +19,25 @@
 - to run the project as filedb
 - ```go run main.go -stderrthreshold=INFO --mode=filedb --port=50001```
 
+### To run unit tests
+- to run all tests in the project from root of the project
+```go test -v ./...```
+- to run tests of a specific package. From  root of the project
+```go test -v models/contact_test.go```
+- to run a specific test
+```go test -timeout 5s -run ^TestAdd$ contacts/models```
+
 ### To test use curl or postman.
 - to insert data
-```curl --location --request POST 'localhost:50090/v1/person' \
---header 'Content-Type: application/json' \
---data-raw '{
+
+curl --location --request POST 'localhost:50090/v1/person' --header 'Content-Type: application/json' --data-raw '{
     "name": "Jiten",
     "address": "Bangalore",
     "email": "Jitenp@outlook.com",
     "mobile": "9618558500"
-}'```
+}'
+
 
 - to delete data
-```curl --location --request DELETE 'localhost:50090/v1/person/10``` 10 is the id. Based on inserted id it should be given
+curl --location --request DELETE 'localhost:50090/v1/person/10
+- 10 is the id. Based on inserted id it should be given

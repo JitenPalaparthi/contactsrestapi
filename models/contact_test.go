@@ -24,6 +24,7 @@ func TestValidateFail(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
+	//time.Sleep(time.Second * 6)
 	actual := models.Add(12, 13)
 	expected := 25
 	if actual != expected {
