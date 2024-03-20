@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mycronjob
+spec:
+  schedule: "*/2 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+      containers:
+      - name: demo-cronjob-busybox
+        image: busybox
+        command: ["sh","-c","for i in $(seq 1 10);do echo 'Hello, job is running';sleep 5;done"]          restartPolicy: OnFailure
+
