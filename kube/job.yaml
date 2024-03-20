@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name:  busybox-job
+spec:
+  parallelism: 2
+  template:
+    metadata:
+      name:  demo-job
+    spec:
+      containers:
+      - name: demo-busybox
+        image: busybox
+        command: ["sh","-c","for i in $(sec 1 10);do echo 'Hello, job is running';sleep 5;done"]
