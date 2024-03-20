@@ -23,7 +23,7 @@ spec:
        valueFrom: 
         secretKeyRef:
           name: db-secret
-          key: postgres-password
+          key: POSTGRES_PASSWORD
      - name: POSTGRES_DB
        valueFrom: 
         configMapKeyRef:
