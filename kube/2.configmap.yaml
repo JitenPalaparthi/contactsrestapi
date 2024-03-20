@@ -13,4 +13,4 @@ metadata:
   name: app-config
   namespace: app
 data:
-  PORT: "8082"
+  PORT: ":8082"
