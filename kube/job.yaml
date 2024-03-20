@@ -8,6 +8,7 @@ spec:
     metadata:
       name:  demo-job
     spec:
+      restartPolicy: Never
       containers:
       - name: demo-busybox
         image: busybox
