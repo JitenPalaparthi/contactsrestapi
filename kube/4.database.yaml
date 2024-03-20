@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres-db
+  namespace: app
+  labels:
+    type: postgres-db
+spec:
+  containers:
+  - name: postgres
+    image: postgres
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    env:
+     - name: POSTGRES_USER
+       valueFrom: 
+        configMapKeyRef:
+          name: db-config
+          key: POSTGRES_USER
+     - name: POSTGRES_PASSWORD
+       valueFrom: 
+        secretKeyRef:
+          name: db-secret
+          key: POSTGRES_PASSWORD
+     - name: POSTGRES_DB
+       valueFrom: 
+        configMapKeyRef:
+          name: db-config
+          key: POSTGRES_DB
+    
+    ports:
+      - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:  db-service
+  namespace: app
+spec:
+  selector:
+    type: postgres-db
+  type:  ClusterIP
+  ports:
+  - name:  port
+    port:  5432
+    targetPort:  5432

@@ -41,3 +41,7 @@ curl --location --request POST 'localhost:50090/v1/person' --header 'Content-Typ
 - to delete data
 curl --location --request DELETE 'localhost:50090/v1/person/10
 - 10 is the id. Based on inserted id it should be given
+
+
+Docker image: jpalaparthi/contactsres
+tapi:v01
